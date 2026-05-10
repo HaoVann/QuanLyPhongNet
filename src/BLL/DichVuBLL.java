@@ -1,16 +1,23 @@
 package BLL;
 
 import DTO.DichVuDTO;
+import DTO.LoaiDichVu;
 
 import DAL.DichVuDAL;
 
+import java.util.Comparator;
 import java.util.List;
+import java.util.stream.Collectors;
 
 public class DichVuBLL {
     private DichVuDAL dal = new DichVuDAL();
 
     public List<DichVuDTO> getAllDichVu(){
         return dal.getAllDichVu();
+    }
+
+    public DichVuDTO getDichVuById(int id){
+        return dal.getDichVuById(id);
     }
 
     public void dichVuCheck(DichVuDTO dichVu) throws Exception{
@@ -69,5 +76,15 @@ public class DichVuBLL {
         } catch (Exception e) {
             return "Lỗi: " + e.getMessage();
         }
+    }
+
+    public List<DichVuDTO> sortGanHet(List<DichVuDTO> list){
+        return list.stream().sorted(Comparator.comparingInt(DichVuDTO::getTonKho).thenComparingInt(DichVuDTO::getNhapHang)).collect(Collectors.toList());
+    }
+
+    public List<DichVuDTO> findByNameAndType(String name, LoaiDichVu loai, List<DichVuDTO> list){
+        return list.stream().filter(dv -> dv.getTen().toLowerCase().contains(name.toLowerCase()))
+                            .filter(dv -> loai == null || dv.getLoai() == loai)
+                            .collect(Collectors.toList());
     }
 }
