@@ -33,7 +33,7 @@ public class TaiKhoanBLL {
             TaiKhoanDTO tk = new TaiKhoanDTO();
             tk.setTenDangNhap(user); tk.setSoDu(current + nap);
             // Cập nhật lại mật khẩu và vai trò nếu cần, ở đây ta giả định chỉ update số dư
-            return tkDAL.update(tk) ? "success" : "Lỗi nạp tiền!";
+            return tkDAL.capNhatSoDu(user, current + nap) ? "success" : "Lỗi nạp tiền!";
         } catch (Exception e) { return "Số tiền không hợp lệ!"; }
     }
 

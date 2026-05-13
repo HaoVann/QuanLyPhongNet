@@ -11,7 +11,7 @@ public class TaiKhoanDAL {
              PreparedStatement pst = con.prepareStatement(sql)) {
             pst.setString(1, user); pst.setString(2, pass);
             ResultSet rs = pst.executeQuery();
-            if (rs.next()) return new TaiKhoanDTO(rs.getInt("id"), rs.getString("tenDangNhap"), rs.getString("matKhau"), rs.getString("vaiTro"), rs.getDouble("soDu"));
+            if (rs.next()) return new TaiKhoanDTO(rs.getInt("maTK"), rs.getString("tenDangNhap"), rs.getString("matKhau"), rs.getString("vaiTro"), rs.getDouble("soDu"));
         } catch (SQLException e) { e.printStackTrace(); }
         return null;
     }
@@ -20,7 +20,7 @@ public class TaiKhoanDAL {
         ArrayList<TaiKhoanDTO> list = new ArrayList<>();
         String sql = "SELECT * FROM TaiKhoan";
         try (Connection con = DBConnection.getConnection(); Statement st = con.createStatement(); ResultSet rs = st.executeQuery(sql)) {
-            while (rs.next()) list.add(new TaiKhoanDTO(rs.getInt("id"), rs.getString("tenDangNhap"), rs.getString("matKhau"), rs.getString("vaiTro"), rs.getDouble("soDu")));
+            while (rs.next()) list.add(new TaiKhoanDTO(rs.getInt("maTK"), rs.getString("tenDangNhap"), rs.getString("matKhau"), rs.getString("vaiTro"), rs.getDouble("soDu")));
         } catch (SQLException e) { e.printStackTrace(); }
         return list;
     }
@@ -49,4 +49,14 @@ public class TaiKhoanDAL {
             pst.setString(1, user); return pst.executeUpdate() > 0;
         } catch (SQLException e) { return false; }
     }
+
+    public boolean capNhatSoDu(String user, double soDuMoi) {
+    String sql = "UPDATE TaiKhoan SET soDu = ? WHERE tenDangNhap = ?";
+    try (Connection con = DBConnection.getConnection(); 
+         PreparedStatement pst = con.prepareStatement(sql)) {
+        pst.setDouble(1, soDuMoi); 
+        pst.setString(2, user);
+        return pst.executeUpdate() > 0;
+    } catch (SQLException e) { return false; }
+}
 }

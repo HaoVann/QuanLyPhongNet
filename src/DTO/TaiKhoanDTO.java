@@ -1,18 +1,18 @@
 package DTO;
 
 public class TaiKhoanDTO {
-    private int id;
+    private int maTK;
     private String tenDangNhap, matKhau, vaiTro;
     private double soDu;
 
     public TaiKhoanDTO() {}
-    public TaiKhoanDTO(int id, String tenDangNhap, String matKhau, String vaiTro, double soDu) {
-        this.id = id; this.tenDangNhap = tenDangNhap; this.matKhau = matKhau;
+    public TaiKhoanDTO(int maTK, String tenDangNhap, String matKhau, String vaiTro, double soDu) {
+        this.maTK = maTK; this.tenDangNhap = tenDangNhap; this.matKhau = matKhau;
         this.vaiTro = vaiTro; this.soDu = soDu;
     }
 
-    public int getId() { return id; }
-    public void setId(int id) { this.id = id; }
+    public int getId() { return maTK; }
+    public void setId(int maTK) { this.maTK = maTK; }
     public String getTenDangNhap() { return tenDangNhap; }
     public void setTenDangNhap(String tenDangNhap) { this.tenDangNhap = tenDangNhap; }
     public String getMatKhau() { return matKhau; }
