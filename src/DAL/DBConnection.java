@@ -7,7 +7,7 @@ import java.sql.SQLException;
 public class DBConnection {
     // 1. Cấu hình thông tin kết nối (Sửa lại cho khớp với máy của bạn)
     private static final String HOST = "localhost";
-    private static final String PORT = "3307"; // Cổng mặc định của MySQL là 3306 . Do máy t bị lỗi nên t setting thành 3307
+    private static final String PORT = "3306"; // Cổng mặc định của MySQL là 3306 . Do máy t bị lỗi nên t setting thành 3307
 
     private static final String DB_NAME = "QuanLyQuanNet";
     private static final String USERNAME = "root"; // Username mặc định của XAMPP/MySQL
