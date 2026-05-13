@@ -72,7 +72,7 @@ public class DangNhapGUI extends JFrame implements ActionListener {
             TaiKhoanDTO tk = (TaiKhoanDTO) result;
             dispose();
             if ("admin".equalsIgnoreCase(tk.getVaiTro())) {
-                new AdminGUI(tk).setVisible(true);
+                new AdminMenuGUI(tk).setVisible(true);
             } else {
                 new UserGUI(tk).setVisible(true);
             }

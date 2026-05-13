@@ -5,10 +5,13 @@ import DTO.MayTinhDTO;
 import java.util.List;
 
 public class MayTinhBLL {
-    private MayTinhDAL mayTinhDAL = new MayTinhDAL();
+    private MayTinhDAL mtDAL = new MayTinhDAL();
 
     public List<MayTinhDTO> layDanhSachMayTinh() {
-        // Có thể thêm logic kiểm tra ở đây trước khi return
-        return mayTinhDAL.layDanhSachMayTinh();
+        return mtDAL.layDanhSachMayTinh(); //
+    }
+
+    public boolean doiTrangThai(String maMay, String trangThaiMoi) {
+        return mtDAL.capNhatTrangThai(maMay, trangThaiMoi);
     }
 }

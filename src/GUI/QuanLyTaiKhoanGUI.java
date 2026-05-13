@@ -10,7 +10,7 @@ import java.awt.*;
 import java.awt.event.*;
 import java.util.ArrayList;
 
-public class AdminGUI extends JFrame implements ActionListener {
+public class QuanLyTaiKhoanGUI extends JFrame implements ActionListener {
 
     private TaiKhoanBLL tkBLL = new TaiKhoanBLL();
     private JTable table;
@@ -19,7 +19,7 @@ public class AdminGUI extends JFrame implements ActionListener {
     private JComboBox<String> cbb_role;
     private JButton btn_add, btn_upd, btn_del, btn_nap, btn_find, btn_refresh, btn_logout;
 
-    public AdminGUI(TaiKhoanDTO admin) {
+    public QuanLyTaiKhoanGUI(TaiKhoanDTO admin) {
         setTitle("Quản Lý Tài Khoản – Admin: " + admin.getTenDangNhap());
         setSize(900, 600);
         setDefaultCloseOperation(EXIT_ON_CLOSE);
