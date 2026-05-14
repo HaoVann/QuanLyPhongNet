@@ -59,4 +59,25 @@ public class TaiKhoanDAL {
         return pst.executeUpdate() > 0;
     } catch (SQLException e) { return false; }
 }
+    // Lấy thông tin tài khoản dựa vào ID (Mã Tài Khoản)
+    public TaiKhoanDTO getAccountById(int id) {
+        String sql = "SELECT * FROM TaiKhoan WHERE maTK = ?";
+        try (Connection con = DBConnection.getConnection(); 
+             PreparedStatement pst = con.prepareStatement(sql)) {
+            pst.setInt(1, id);
+            ResultSet rs = pst.executeQuery();
+            if (rs.next()) {
+                return new TaiKhoanDTO(
+                    rs.getInt("maTK"), 
+                    rs.getString("tenDangNhap"), 
+                    rs.getString("matKhau"), 
+                    rs.getString("vaiTro"), 
+                    rs.getDouble("soDu")
+                );
+            }
+        } catch (SQLException e) { 
+            e.printStackTrace(); 
+        }
+        return null;
+    }
 }

@@ -44,6 +44,9 @@ public class QuanLyVanhHanhBLL {
         nkMoi.setMaMay(maMay);
 
         if (nkDAL.moMay(nkMoi)) {
+            // THÊM 1 DÒNG NÀY ĐỂ ĐỔI TRẠNG THÁI MÁY TRÊN DATABASE SANG ĐỎ
+            mtDAL.capNhatTrangThai(maMay, "DANG_CHOI");
+            
             return "Mở máy " + maMay + " thành công!";
         }
         return "Lỗi: Không thể mở máy trên Database!";

@@ -22,13 +22,34 @@ public class DashboardGUI extends JFrame {
         setLocationRelativeTo(null);
         setLayout(new BorderLayout(10, 10));
 
-        // 1. Khu vực Tiêu đề
+        // 1. Khu vực Tiêu đề và Nút Làm mới (Đã tích hợp mã mới)
+        JPanel pn_Top = new JPanel(new BorderLayout()); // Panel gom chung để đặt lên NORTH
+        
         JLabel lblTitle = new JLabel("SƠ ĐỒ PHÒNG MÁY", SwingConstants.CENTER);
         lblTitle.setFont(new Font("Arial", Font.BOLD, 26));
         lblTitle.setBorder(BorderFactory.createEmptyBorder(15, 0, 15, 0));
-        add(lblTitle, BorderLayout.NORTH);
+        pn_Top.add(lblTitle, BorderLayout.CENTER);
 
-        // 2. Khu vực Sơ đồ máy tính (Dùng FlowLayout để các máy tự xếp nối tiếp nhau)
+        // Tạo thanh công cụ chứa nút Refresh và đẩy sang góc phải
+        JPanel pnTool = new JPanel(new FlowLayout(FlowLayout.RIGHT, 15, 15));
+        JButton btnRefresh = new JButton("Làm mới (Refresh)");
+        btnRefresh.setBackground(new Color(52, 152, 219));
+        btnRefresh.setForeground(Color.WHITE);
+        btnRefresh.setFont(new Font("Arial", Font.BOLD, 13));
+        btnRefresh.setCursor(new Cursor(Cursor.HAND_CURSOR));
+
+        // Sự kiện khi bấm nút Refresh
+        btnRefresh.addActionListener(e -> {
+            veSoDoMayTinh(); // Cập nhật lại giao diện
+            JOptionPane.showMessageDialog(this, "Đã cập nhật tình trạng phòng máy mới nhất!");
+        });
+
+        pnTool.add(btnRefresh);
+        pn_Top.add(pnTool, BorderLayout.EAST); // Gắn thanh công cụ vào bên phải của vùng Top
+
+        add(pn_Top, BorderLayout.NORTH); // Đưa toàn bộ cụm Tiêu đề + Nút lên đầu JFrame
+
+        // 2. Khu vực Sơ đồ máy tính
         pn_SoDo = new JPanel(new FlowLayout(FlowLayout.LEFT, 20, 20));
         JScrollPane scrollPane = new JScrollPane(pn_SoDo);
         scrollPane.setBorder(BorderFactory.createTitledBorder("Danh sách Máy Trạm"));
@@ -59,35 +80,32 @@ public class DashboardGUI extends JFrame {
 
     // Hàm load dữ liệu từ Database và vẽ ra giao diện
     private void veSoDoMayTinh() {
-        pn_SoDo.removeAll(); // Xóa sạch sơ đồ cũ để vẽ lại (quan trọng khi refresh)
+        pn_SoDo.removeAll(); 
         
         List<MayTinhDTO> dsMay = mtBLL.layDanhSachMayTinh();
 
         for (MayTinhDTO mt : dsMay) {
-            // Tạo 1 nút bấm đại diện cho 1 máy
             JButton btnMay = new JButton("<html><center>" + mt.getMaMay() + "<br/>" + mt.getTenMay() + "</center></html>");
-            btnMay.setPreferredSize(new Dimension(140, 100)); // Kích thước nút
+            btnMay.setPreferredSize(new Dimension(140, 100)); 
             btnMay.setFont(new Font("Arial", Font.BOLD, 16));
             btnMay.setFocusPainted(false);
             btnMay.setCursor(new Cursor(Cursor.HAND_CURSOR));
 
-            // Đổi màu tùy theo trạng thái máy
             switch (mt.getTrangThai()) {
                 case "TRONG":
-                    btnMay.setBackground(new Color(46, 204, 113)); // Xanh lá
+                    btnMay.setBackground(new Color(46, 204, 113)); 
                     btnMay.setForeground(Color.WHITE);
                     break;
                 case "DANG_CHOI":
-                    btnMay.setBackground(new Color(231, 76, 60)); // Đỏ
+                    btnMay.setBackground(new Color(231, 76, 60)); 
                     btnMay.setForeground(Color.WHITE);
                     break;
-                default: // BAO_TRI
-                    btnMay.setBackground(Color.GRAY); // Xám
+                default: 
+                    btnMay.setBackground(Color.GRAY); 
                     btnMay.setForeground(Color.WHITE);
                     break;
             }
 
-            // Bắt sự kiện khi thu ngân click vào 1 máy bất kỳ
             btnMay.addActionListener(new ActionListener() {
                 @Override
                 public void actionPerformed(ActionEvent e) {
@@ -95,39 +113,31 @@ public class DashboardGUI extends JFrame {
                 }
             });
 
-            pn_SoDo.add(btnMay); // Thêm nút vào Panel
+            pn_SoDo.add(btnMay); 
         }
         
-        // Cập nhật lại giao diện sau khi vẽ xong
         pn_SoDo.revalidate();
         pn_SoDo.repaint();
     }
 
-    // Hàm xử lý logic khi click vào máy
     private void xuLyClickMayTinh(MayTinhDTO mt) {
         if (mt.getTrangThai().equals("TRONG")) {
-            // 1. NẾU MÁY TRỐNG -> Yêu cầu mở máy
             String tenTK = JOptionPane.showInputDialog(this, 
                 "Nhập Tên đăng nhập hội viên\n(Để trống nếu là Khách vãng lai):", 
                 "Mở Máy " + mt.getMaMay(), 
                 JOptionPane.QUESTION_MESSAGE);
                 
-            // Nếu người dùng không bấm Cancel
             if (tenTK != null) { 
                 String ketQua = vanHanhBLL.moMayChoKhach(mt.getMaMay(), tenTK.trim());
                 JOptionPane.showMessageDialog(this, ketQua);
-                veSoDoMayTinh(); // Reload lại sơ đồ để máy chuyển sang màu Đỏ
+                veSoDoMayTinh(); 
             }
             
         } else if (mt.getTrangThai().equals("DANG_CHOI")) {
-            // Mở Giao diện Thanh toán chuẩn
             new ThanhToanGUI(this, mt.getMaMay()).setVisible(true);
-            
-            // Sau khi thanh toán xong (cửa sổ Dialog đóng lại), tiến hành vẽ lại sơ đồ
             veSoDoMayTinh();
             
         } else {
-            // 3. NẾU MÁY BẢO TRÌ
             JOptionPane.showMessageDialog(this, "Máy đang bảo trì, không thể thao tác!", "Cảnh báo", JOptionPane.WARNING_MESSAGE);
         }
     }

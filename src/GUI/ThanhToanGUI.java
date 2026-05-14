@@ -2,143 +2,119 @@ package GUI;
 
 import BLL.QuanLyVanhHanhBLL;
 import DAL.ChiTietGoiDichVuDAL;
+import DAL.DBConnection;
 import DAL.DichVuDAL;
 import DAL.NhatKyThueDAL;
+import DAL.TaiKhoanDAL;
 import DTO.ChiTietGoiDichVuDTO;
 import DTO.DichVuDTO;
 import DTO.NhatKyThueDTO;
+import DTO.TaiKhoanDTO;
 
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.text.SimpleDateFormat;
 import java.util.List;
 
 public class ThanhToanGUI extends JDialog {
     private String maMay;
-    private DashboardGUI parentDashboard; // Để gọi hàm refresh sơ đồ máy sau khi thanh toán
+    private DashboardGUI parentDashboard;
     private QuanLyVanhHanhBLL vanHanhBLL = new QuanLyVanhHanhBLL();
-    
-    // Khai báo các đối tượng để lấy dữ liệu in Bill
     private NhatKyThueDAL nkDAL = new NhatKyThueDAL();
     private ChiTietGoiDichVuDAL ctDAL = new ChiTietGoiDichVuDAL();
-    private DichVuDAL dvDAL = new DichVuDAL(); // Dùng code của Duy để lấy tên món ăn
+    private DichVuDAL dvDAL = new DichVuDAL();
+    private TaiKhoanDAL tkDAL = new TaiKhoanDAL();
 
     public ThanhToanGUI(DashboardGUI parent, String maMay) {
-        super(parent, "Hóa Đơn Thanh Toán", true); // true = Modal (bắt buộc thao tác xong mới quay lại được)
+        super(parent, "Chi Tiết Máy Đang Chạy - " + maMay, true);
         this.maMay = maMay;
         this.parentDashboard = parent;
 
-        setSize(450, 550);
+        setSize(500, 600);
         setLocationRelativeTo(parent);
         setLayout(new BorderLayout(10, 10));
 
         initComponents();
-        loadDataLenBill();
     }
 
     private void initComponents() {
-        // --- PHẦN HEADER: THÔNG TIN PHIÊN CHƠI ---
-        JPanel pnTop = new JPanel(new GridLayout(4, 1, 5, 5));
-        pnTop.setBorder(BorderFactory.createEmptyBorder(10, 20, 10, 20));
-        
-        JLabel lblTitle = new JLabel("HÓA ĐƠN MÁY " + maMay, SwingConstants.CENTER);
-        lblTitle.setFont(new Font("Arial", Font.BOLD, 20));
-        pnTop.add(lblTitle);
+        NhatKyThueDTO phien = nkDAL.getPhienDangThue(maMay);
+        TaiKhoanDTO tk = (phien != null) ? tkDAL.getAccountById(phien.getMaTK()) : null;
 
-        pnTop.add(new JLabel("Tài khoản: " + layTenTaiKhoan()));
-        pnTop.add(new JLabel("Thời gian bắt đầu: " + layGioBatDau()));
+        // --- PHẦN 1: THÔNG TIN KHÁCH HÀNG & TRẠNG THÁI ---
+        JPanel pnInfo = new JPanel(new GridLayout(4, 1, 5, 5));
+        pnInfo.setBorder(BorderFactory.createTitledBorder("Thông tin phiên chơi"));
         
-        add(pnTop, BorderLayout.NORTH);
+        pnInfo.add(new JLabel(" Tên khách hàng: " + (tk != null ? tk.getTenDangNhap() : "Khách vãng lai")));
+        pnInfo.add(new JLabel(" Giờ bắt đầu: " + (phien != null ? new SimpleDateFormat("HH:mm:ss").format(phien.getThoiGianBatDau()) : "N/A")));
+        
+        JLabel lbSoDu = new JLabel(" Số dư còn lại: " + (tk != null ? Math.round(tk.getSoDu()) : 0) + " VNĐ");
+        lbSoDu.setFont(new Font("Arial", Font.BOLD, 14));
+        lbSoDu.setForeground(new Color(0, 128, 0));
+        pnInfo.add(lbSoDu);
 
-        // --- PHẦN GIỮA: BẢNG DANH SÁCH ĐỒ ĂN/THỨC UỐNG ---
-        String[] columns = {"Tên món", "SL", "Thành tiền"};
+        add(pnInfo, BorderLayout.NORTH);
+
+        // --- PHẦN 2: DANH SÁCH ORDER (Yêu cầu dịch vụ) ---
+        String[] columns = {"Tên món", "Số lượng", "Thành tiền"};
         DefaultTableModel model = new DefaultTableModel(columns, 0);
-        JTable tbDichVu = new JTable(model);
-        JScrollPane scrollPane = new JScrollPane(tbDichVu);
-        scrollPane.setBorder(BorderFactory.createTitledBorder("Chi tiết dịch vụ đã gọi"));
+        JTable tbOrder = new JTable(model);
         
-        // Đổ dữ liệu vào bảng
-        NhatKyThueDTO phienHienTai = nkDAL.getPhienDangThue(maMay);
-        if (phienHienTai != null) {
-            List<ChiTietGoiDichVuDTO> listCT = ctDAL.getDichVuTheoPhien(phienHienTai.getMaThue());
-            for (ChiTietGoiDichVuDTO ct : listCT) {
-                DichVuDTO dv = dvDAL.getDichVuById(ct.getMaDV()); // Lấy tên món từ module của Duy
-                String tenMon = (dv != null) ? dv.getTen() : "Dịch vụ không rõ";
-                model.addRow(new Object[]{tenMon, ct.getSoLuong(), Math.round(ct.getThanhTien()) + "đ"});
+        if (phien != null) {
+            List<ChiTietGoiDichVuDTO> list = ctDAL.getDichVuTheoPhien(phien.getMaThue());
+            for (ChiTietGoiDichVuDTO ct : list) {
+                DichVuDTO dv = dvDAL.getDichVuById(ct.getMaDV());
+                model.addRow(new Object[]{
+                    (dv != null ? dv.getTen() : "Không rõ"),
+                    ct.getSoLuong(),
+                    Math.round(ct.getThanhTien()) + "đ"
+                });
             }
         }
-        add(scrollPane, BorderLayout.CENTER);
+        
+        JScrollPane sp = new JScrollPane(tbOrder);
+        sp.setBorder(BorderFactory.createTitledBorder("Danh sách món đã gọi từ máy trạm"));
+        add(sp, BorderLayout.CENTER);
 
-        // --- PHẦN BOTTOM: TỔNG TIỀN VÀ NÚT BẤM ---
+        // --- PHẦN 3: TỔNG KẾT & NÚT BẤM ---
         JPanel pnBottom = new JPanel(new BorderLayout());
-        pnBottom.setBorder(BorderFactory.createEmptyBorder(10, 20, 10, 20));
+        pnBottom.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
 
-        // Tính toán tiền
-        double tienMay = vanHanhBLL.tinhTienMay(maMay);
-        double tienDV = vanHanhBLL.tinhTienDichVu(maMay);
-        double tongTien = tienMay + tienDV;
+        double tienDV = (phien != null) ? vanHanhBLL.tinhTienDichVu(maMay) : 0;
+        JLabel lbTongTienDV = new JLabel("Tổng tiền dịch vụ chưa thu: " + Math.round(tienDV) + " VNĐ");
+        lbTongTienDV.setFont(new Font("Arial", Font.BOLD, 15));
+        lbTongTienDV.setForeground(Color.RED);
+        pnBottom.add(lbTongTienDV, BorderLayout.NORTH);
 
-        JPanel pnTien = new JPanel(new GridLayout(3, 1));
-        pnTien.add(new JLabel("Tiền giờ chơi: " + Math.round(tienMay) + " VNĐ"));
-        pnTien.add(new JLabel("Tiền dịch vụ: " + Math.round(tienDV) + " VNĐ"));
+        JPanel pnBtn = new JPanel(new FlowLayout(FlowLayout.RIGHT));
+        JButton btnKetThuc = new JButton("Thanh toán & Tắt máy");
+        btnKetThuc.setBackground(new Color(231, 76, 60));
+        btnKetThuc.setForeground(Color.WHITE);
         
-        JLabel lblTongTien = new JLabel("TỔNG CỘNG: " + Math.round(tongTien) + " VNĐ");
-        lblTongTien.setFont(new Font("Arial", Font.BOLD, 18));
-        lblTongTien.setForeground(Color.RED);
-        pnTien.add(lblTongTien);
-        
-        pnBottom.add(pnTien, BorderLayout.CENTER);
+        JButton btnDong = new JButton("Chỉ xem (Đóng)");
 
-        // Nút hành động
-        JPanel pnButtons = new JPanel(new FlowLayout(FlowLayout.RIGHT));
-        JButton btnThanhToan = new JButton("Xác nhận Thu tiền");
-        btnThanhToan.setBackground(new Color(46, 204, 113));
-        btnThanhToan.setForeground(Color.WHITE);
-        btnThanhToan.setFont(new Font("Arial", Font.BOLD, 14));
-        
-        JButton btnHuy = new JButton("Đóng");
-
-        pnButtons.add(btnThanhToan);
-        pnButtons.add(btnHuy);
-        pnBottom.add(pnButtons, BorderLayout.EAST);
+        pnBtn.add(btnKetThuc);
+        pnBtn.add(btnDong);
+        pnBottom.add(pnBtn, BorderLayout.SOUTH);
 
         add(pnBottom, BorderLayout.SOUTH);
 
-        // --- SỰ KIỆN NÚT BẤM ---
-        btnHuy.addActionListener(e -> dispose()); // Đóng cửa sổ
-
-        btnThanhToan.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                // Gọi BLL để lưu Database và cập nhật trạng thái máy
-                String ketQua = vanHanhBLL.thanhToan(maMay);
-                JOptionPane.showMessageDialog(ThanhToanGUI.this, ketQua);
-                
-                // Refresh lại sơ đồ bên Dashboard (để máy đổi từ Đỏ sang Xanh)
-                // Phải viết thêm hàm refreshSoDo() bên DashboardGUI
-                dispose(); 
+        // Sự kiện
+        btnDong.addActionListener(e -> dispose());
+        
+        btnKetThuc.addActionListener(e -> {
+            int check = JOptionPane.showConfirmDialog(this, "Xác nhận khách đã trả tiền dịch vụ và muốn tắt máy?", "Xác nhận", JOptionPane.YES_NO_OPTION);
+            if (check == JOptionPane.YES_OPTION) {
+                String res = vanHanhBLL.thanhToan(maMay);
+                JOptionPane.showMessageDialog(this, res);
+                dispose();
             }
         });
     }
-
-    private void loadDataLenBill() {} // Đã gộp logic vào initComponents cho gọn
-
-    // Hàm phụ trợ lấy thông tin
-    private String layGioBatDau() {
-        NhatKyThueDTO phien = nkDAL.getPhienDangThue(maMay);
-        if (phien != null && phien.getThoiGianBatDau() != null) {
-            SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy HH:mm:ss");
-            return sdf.format(phien.getThoiGianBatDau());
-        }
-        return "N/A";
-    }
-
-    private String layTenTaiKhoan() {
-        NhatKyThueDTO phien = nkDAL.getPhienDangThue(maMay);
-        // Ở đây nếu có thời gian, bạn gọi TaiKhoanDAL để lấy Tên thay vì hiển thị ID
-        return (phien != null) ? "Khách hàng ID-" + phien.getMaTK() : "Khách vãng lai";
-    }
+    
 }

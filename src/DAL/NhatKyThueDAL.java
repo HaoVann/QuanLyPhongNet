@@ -50,4 +50,25 @@ public class NhatKyThueDAL {
             return ps.executeUpdate() > 0;
         } catch (SQLException e) { return false; }
     }
+    
+    // Lấy thông tin phiên thuê ĐANG CHẠY dựa vào Mã Tài Khoản của khách
+    public NhatKyThueDTO getPhienDangThueCuaTaiKhoan(int maTK) {
+        String sql = "SELECT * FROM NhatKyThue WHERE MaTK = ? AND TrangThai = 'DANG_THUE'";
+        try (Connection con = DBConnection.getConnection();
+             PreparedStatement ps = con.prepareStatement(sql)) {
+            ps.setInt(1, maTK);
+            ResultSet rs = ps.executeQuery();
+            if (rs.next()) {
+                NhatKyThueDTO nk = new NhatKyThueDTO();
+                nk.setMaThue(rs.getInt("MaThue"));
+                nk.setMaTK(rs.getInt("MaTK"));
+                nk.setMaMay(rs.getString("MaMay"));
+                nk.setThoiGianBatDau(rs.getTimestamp("ThoiGianBatDau"));
+                return nk;
+            }
+        } catch (SQLException e) { 
+            e.printStackTrace(); 
+        }
+        return null; // Không tìm thấy máy khách đang ngồi
+    }
 }
